@@ -1,0 +1,13 @@
+CREATE food/fruits
+CREATE food/vegetables
+CREATE food/fruits/mongose/poma
+CREATE food/fruits/carrot
+MOVE food/fruits/carrot food/vegetables
+CREATE food/vegetables
+CREATE food/vegetables/potato
+CREATE food/fruits/apples
+CREATE food/fruits/apples/fuji
+DELETE food/fruits/apples/fuji
+CREATE food/fruits/onion
+MOVE food/fruits/onion food/vegetables
+LIST
