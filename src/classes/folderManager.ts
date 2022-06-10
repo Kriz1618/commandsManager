@@ -1,13 +1,13 @@
 import Folder from "./folder";
 
 export default class FolderManager {
-    root: Folder | null;
+    root: Folder;
 
     constructor() {
-        this.root = null;
+        this.root = new Folder('', true);
     }
 
-    addFolder(path: string, parentRoot?: Folder): void {
+    addFolder(path: string, parentRoot = this.root, target = '', targetFolders?: Folder[]): void {
         if (!path) {
             return;
         }
@@ -15,41 +15,43 @@ export default class FolderManager {
         const paths = path.split('/');
         const name: string = paths.shift() as string;
         const subPath = paths.join('/');
-
-        if (!this.root) {
-            this.root = new Folder(name);
-            return this.addFolder(subPath, this.root);
-        }
-        if (this.root.name === name) {
-            return this.addFolder(subPath, this.root);
-        }
-
-        const subfolders = (parentRoot as Folder).getSubfolders();
+        const subfolders = parentRoot.getSubfolders();
         let subfolder = subfolders.find(folder => folder.name === name);
+
+        if (parentRoot.isMain() && !subfolder) {
+            subfolder = new Folder(name);
+            subfolders.push(subfolder);
+            parentRoot.updateSubfolder(subfolders);
+            return this.addFolder(subPath, subfolder, target, targetFolders);
+        }
 
         if (!subfolder) {
             subfolder = new Folder(name);
             subfolders.push(subfolder);
         }
 
-        parentRoot?.updateSubfolder(subfolders);
-        return this.addFolder(subPath, subfolder);
+        if (name === target && targetFolders) {
+            subfolder.updateSubfolder(targetFolders);
+        }
+
+        parentRoot.updateSubfolder(subfolders as Folder[]);
+        return this.addFolder(subPath, subfolder, target, targetFolders);
     }
 
     removeFolder(folderPath: string): string {
         const folders = folderPath.split('/');
         const folder = folders.at(-1);
         const rootPath = folders.shift() || '';
+        const mainFolders = this.root.getSubfolders();
+        let lastPath = mainFolders.find(fl => fl.name === rootPath) as Folder;
 
-        if (rootPath !== this.root?.name) {
+        if (!lastPath) {
             return `Cannot delete ${folderPath} - ${rootPath} does not exist`;
         }
-        if (!folders.length && folder === this.root.name) {
-            this.root = null;
+        if (!folders.length && folder === lastPath.name) {
+            this.root.updateSubfolder(mainFolders.filter(fl => fl.name !== folder));
             return '';
         }
-
-        let lastPath = this.root;
 
         for (const path of folders) {
             const subfolders = lastPath.getSubfolders();
@@ -72,8 +74,8 @@ export default class FolderManager {
 
     moveFolder(path: string, folder: string): string {
         const folders = path.split('/');
-        const newFolder = folders.pop();
-        const validOrigin = this.validatePath(folders.join('/'));
+        const newFolder = folders.at(-1);
+        const validOrigin = this.validatePath(path);
         const validDestiny = this.validatePath(folder);
         const error = `Cannot move ${newFolder} - `;
 
@@ -81,23 +83,21 @@ export default class FolderManager {
             return `${error}${!validOrigin ? path : folder} does not exist`;
         }
 
-        this.addFolder(`${folder}/${newFolder}`);
+        const subfolders = this.retrieveSubFolders(path, newFolder);
+        this.addFolder(`${folder}/${newFolder}`, this.root, newFolder, subfolders);
         this.removeFolder(path);
 
         return '';
     }
 
     showFolders(root = this.root, identation = 0): string {
-        if (!root) {
-            return '';
-        }
-
         const spaces = new Array(identation).join(' ');
+        const nextSpace = root.isMain() ? 0 : 2;
         const subfolders = root.getSubfolders();
-        let ss = `${spaces}${root.name}\n`;
+        let ss = root.isMain() ? '' : `${spaces}${root.name}\n`;
 
         for (const folder of subfolders) {
-            ss += this.showFolders(folder, identation + 2);
+            ss += this.showFolders(folder, identation + nextSpace);
         }
 
         return ss;
@@ -105,7 +105,13 @@ export default class FolderManager {
 
     private validatePath(path: string): boolean {
         const folders = path.split('/');
-        let subPath = this.root;
+        const mainFolder = folders[0];
+        const mainFolders = this.root.getSubfolders();
+        let subPath = mainFolders.find(fl => fl.name === mainFolder) as Folder;
+
+        if (!subPath) {
+            false;
+        }
 
         for (let i = 0; i < folders.length; i++) {
             const folder = folders[i];
@@ -115,10 +121,37 @@ export default class FolderManager {
                 return false;
             }
             if (nextPath) {
-                subPath = subPath.getSubfolders().find(folder => folder.name === nextPath) || null;
+                subPath = subPath.getSubfolders().find(folder => folder.name === nextPath)  as Folder;
+            }
+            if (!subPath) {
+                return false;
             }
         }
     
         return true;
-    }   
+    }
+
+    private retrieveSubFolders(path: string, target?: string): Folder [] {
+        const mainFolders = this.root.getSubfolders();
+        const folders = path.split('/');
+        const mainFolder = folders.shift();
+        let mainPath = mainFolders.find(fl => fl.name === mainFolder) as Folder;
+        let subfolders = mainPath.getSubfolders();
+
+        if (target === mainPath.name) {
+            return subfolders;
+        }
+
+        for (const folder of folders) {
+            subfolders = mainPath.getSubfolders();
+            mainPath = subfolders.find(fl => fl.name === folder) as Folder;
+
+            if (target === mainPath.name) {
+                subfolders = mainPath.getSubfolders();
+                break;
+            }
+        }
+
+        return subfolders;
+    }
 };

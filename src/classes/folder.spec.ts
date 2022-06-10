@@ -2,13 +2,19 @@ import Folder from "./folder";
 
 describe('Folder test', () => {
     it('Should create a new folder istance', () => {
-        const folderObj = new Folder('folder test');
-        expect(folderObj.name).toEqual('folder test');
+        const folder = new Folder('folder test');
+        expect(folder.name).toEqual('folder test');
+        expect(folder.isMain()).toBe(false);
+    });
+    it('Should create a main folder', () => {
+        const folder = new Folder('main', true);
+        expect(folder.name).toEqual('main');
+        expect(folder.isMain()).toBe(true);
     });
 
     it('Should modify subfolders', () => {
-        const folderObj = new Folder('test');
-        folderObj.updateSubfolder([new Folder('subfolder')]);
-        expect(folderObj.getSubfolders()).not.toEqual([]);
+        const folder = new Folder('test');
+        folder.updateSubfolder([new Folder('subfolder')]);
+        expect(folder.getSubfolders()).not.toEqual([]);
     });
 });

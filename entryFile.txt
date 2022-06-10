@@ -1,13 +1,16 @@
-CREATE food/fruits
-CREATE food/vegetables
-CREATE food/fruits/mongose/poma
-CREATE food/fruits/carrot
-MOVE food/fruits/carrot food/vegetables
-CREATE food/vegetables
-CREATE food/vegetables/potato
-CREATE food/fruits/apples
-CREATE food/fruits/apples/fuji
-DELETE food/fruits/apples/fuji
-CREATE food/fruits/onion
-MOVE food/fruits/onion food/vegetables
+CREATE fruits
+CREATE vegetables
+CREATE grains
+CREATE fruits/apples
+CREATE fruits/apples/fuji
+LIST
+CREATE grains/squash
+MOVE grains/squash vegetables
+CREATE foods
+MOVE grains foods
+MOVE fruits foods
+MOVE vegetables foods
+LIST
+DELETE fruits/apples
+DELETE foods/fruits/apples
 LIST

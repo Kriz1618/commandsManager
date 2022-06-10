@@ -5,7 +5,7 @@ describe('Folder manager test', () => {
     describe('Create a new manager istance', () => {
         it('Should create a new folder istance without root', () => {
             const managerObj = new Manager();
-            expect(managerObj.root).toBe(null);
+            expect(managerObj.root).not.toBe(null);
         });  
     });
 
@@ -23,8 +23,8 @@ describe('Folder manager test', () => {
             manager.addFolder('first/second/third');
             manager.addFolder('first/other');
 
-            expect(manager?.root?.getSubfolders()?.length).toEqual(2);
-            expect(manager?.root?.name).toEqual('first');
+            expect(manager.root.getSubfolders()?.length).toEqual(1);
+            expect(manager.root.isMain()).toBe(true);
         });
     });
 
@@ -51,6 +51,16 @@ describe('Folder manager test', () => {
             manager.addFolder('first/other');
             expect(manager.moveFolder('first/second/third', 'first/second')).toEqual('');
         });
+
+        it('Should move a folder with subfolders', () => {
+            const manager = new Manager();
+            manager.addFolder('first/second/third');
+            manager.addFolder('first/other');
+            manager.moveFolder('first/second/third', 'first/root');
+            manager.addFolder('root');
+            expect(manager.moveFolder('first', 'root')).toEqual('');
+            expect(manager.root.getSubfolders().length).toEqual(1);
+        });
     });
 
     describe('Deleting folders', () => {
@@ -60,6 +70,14 @@ describe('Folder manager test', () => {
             expect(
                 manager.removeFolder('first/other'),
             ).toEqual('Cannot delete first/other - other does not exist');
+        });
+
+        it('Should not delete an empty path', () => {
+            const manager = new Manager();
+            manager.addFolder('first/second/third');
+            expect(
+                manager.removeFolder(''),
+            ).toEqual('Cannot delete  -  does not exist');
         });
 
         it('Should not delete from an invalid folder', () => {
@@ -74,7 +92,7 @@ describe('Folder manager test', () => {
             const manager = new Manager();
             manager.addFolder('first');
             expect(manager.removeFolder('first')).toEqual('');
-            expect(manager.root).toBe(null);
+            expect(manager.root.isMain()).toBe(true);
         });
 
         it('Should remove a valid folder', () => {
@@ -97,10 +115,4 @@ describe('Folder manager test', () => {
         });
 
     });
-
-    // it('Should modify subfolders', () => {
-    //     const folderObj = new Folder('test');
-    //     folderObj.updateSubfolder([new Folder('subfolder')]);
-    //     expect(folderObj.getSubfolders()).not.toEqual([]);
-    // });
 });
